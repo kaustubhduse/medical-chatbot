@@ -21,7 +21,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   return (
     <div
       className={`bg-gray-900 h-screen text-white transition-all duration-300 fixed flex flex-col ${
-        isOpen ? "w-64" : "w-16"
+        isOpen ? "lg:w-64 w-fit"  : "w-16"
       }`}
     >
       {/* Toggle Button */}
