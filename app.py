@@ -9,28 +9,33 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import os
 import speech_recognition as sr
-import pyttsx3
 import threading
 import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wav
+from gtts import gTTS
+import base64
 
 # Load environment variables
 load_dotenv()
 
-# Initialize text-to-speech engine once
-if "engine" not in st.session_state:
-    st.session_state.engine = pyttsx3.init()
-
-# Function to convert text to speech in a separate thread
+# Function to convert text to speech using gTTS
 def speak(text):
-    def run_speech():
-        engine = pyttsx3.init()
-        engine.say(text)
-        engine.runAndWait()
-    
-    threading.Thread(target=run_speech).start()
-    
+    try:
+        # Create a gTTS object
+        tts = gTTS(text=text, lang='en')
+        
+        # Save the audio to a temporary file
+        temp_file = "temp_audio.mp3"
+        tts.save(temp_file)
+        
+        # Play the audio in Streamlit
+        with open(temp_file, "rb") as f:
+            audio_bytes = f.read()
+        st.audio(audio_bytes, format="audio/mp3")
+    except Exception as e:
+        st.error(f"❌ Error during text-to-speech conversion: {e}")
+
 # Function to capture voice input and convert it to text
 def get_voice_input():
     st.write("🎤 Listening... Speak now!")
@@ -65,7 +70,6 @@ def get_voice_input():
         st.error(f"❌ Error during recording: {e}")
         return None
 
-    
 # Function to extract text from PDFs
 def get_pdf_text(pdf_docs):
     text = ""
@@ -182,7 +186,7 @@ def handle_userinput(user_question):
             role = "User" if i % 2 == 0 else "Bot"
             st.write(f"**{role}:** {message.content}")
             if role == "Bot":
-                speak(message.content)  # Speak the bot's response
+                speak(message.content)  # Speak the bot's response using gTTS
     else:
         st.warning("⚠️ No conversation started yet! Upload PDFs and process them first.")
 
@@ -248,4 +252,4 @@ def main():
                     st.error(f"❌ Error: {e}")
 
 if __name__ == '__main__':
-    main()  
+    main()
