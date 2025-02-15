@@ -12,8 +12,6 @@ numpy
 scipy
 speechrecognition
 gtts
-pyttsx3
 pdfplumber
 pandas
 plotly.express
-
