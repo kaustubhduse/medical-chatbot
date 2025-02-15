@@ -11,6 +11,9 @@ import os
 import speech_recognition as sr
 import pyttsx3
 import threading
+import sounddevice as sd
+import numpy as np
+import scipy.io.wavfile as wav
 
 # Load environment variables
 load_dotenv()
@@ -27,24 +30,42 @@ def speak(text):
         engine.runAndWait()
     
     threading.Thread(target=run_speech).start()
-
+    
 # Function to capture voice input and convert it to text
 def get_voice_input():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("🎤 Listening... Speak now!")
-        audio = recognizer.listen(source)
-        try:
-            text = recognizer.recognize_google(audio)
+    st.write("🎤 Listening... Speak now!")
+    
+    # Set recording parameters
+    duration = 5  # Maximum recording duration in seconds
+    sample_rate = 16000  # Sample rate for audio recording
+    
+    try:
+        # Record audio
+        audio = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+        sd.wait()  # Wait until recording is finished
+        
+        # Save the recorded audio to a temporary file
+        temp_file = "temp.wav"
+        wav.write(temp_file, sample_rate, audio)
+        
+        # Use speech_recognition to convert audio to text
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(temp_file) as source:
+            audio_data = recognizer.record(source)
+            text = recognizer.recognize_google(audio_data)
             st.write(f"👤 You said: {text}")
             return text
-        except sr.UnknownValueError:
-            st.error("❌ Sorry, I could not understand the audio.")
-            return None
-        except sr.RequestError:
-            st.error("❌ Speech recognition service is down. Please try again later.")
-            return None
+    except sr.UnknownValueError:
+        st.error("❌ Sorry, I could not understand the audio.")
+        return None
+    except sr.RequestError:
+        st.error("❌ Speech recognition service is down. Please try again later.")
+        return None
+    except Exception as e:
+        st.error(f"❌ Error during recording: {e}")
+        return None
 
+    
 # Function to extract text from PDFs
 def get_pdf_text(pdf_docs):
     text = ""
@@ -74,10 +95,9 @@ def summarize_text(text):
         )
         
         summary_prompt = (
-            "Provide a detailed summary of the following medical report. Include the patient's name, date of report, "
+            "Summarize the following medical report in a clear and concise manner. "
             "Give the name of the patient, date of report, and any relevant medical history in points. "
-            "and any relevant medical history. Clearly outline key observations, test results, diagnoses, and doctors recommendations. "
-            "Highlight important symptoms, prescribed medications, treatment plans, and follow-up instructions. "
+            "Highlight key observations, diagnoses, and recommendations. "
             "Ensure the summary is understandable for both medical professionals and patients.\n\n"
             f"{text}"
         )
