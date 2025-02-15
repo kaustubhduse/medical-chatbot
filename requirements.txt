@@ -6,11 +6,14 @@ langchain-community
 sentence-transformers
 openai
 faiss-cpu
-pyaudio
 pygame
+sounddevice
+numpy
+scipy
+speechrecognition
 gtts
 pyttsx3
 pdfplumber
 pandas
 plotly.express
-SpeechRecognition
+
