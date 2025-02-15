@@ -74,15 +74,28 @@ def summarize_text(text):
         )
         
         summary_prompt = (
-            "Summarize the following medical report in a clear and concise manner. "
+            "Provide a detailed summary of the following medical report. Include the patient's name, date of report, "
             "Give the name of the patient, date of report, and any relevant medical history in points. "
-            "Highlight key observations, diagnoses, and recommendations. "
+            "and any relevant medical history. Clearly outline key observations, test results, diagnoses, and doctors recommendations. "
+            "Highlight important symptoms, prescribed medications, treatment plans, and follow-up instructions. "
             "Ensure the summary is understandable for both medical professionals and patients.\n\n"
             f"{text}"
         )
         
         summary = llm.predict(summary_prompt)
-        return summary
+        
+         # Correct file path inside the client-side public directory
+        base_dir = os.path.abspath("client/client-side/public")
+        summary_file_path = os.path.join(base_dir, "summary.txt")
+
+        # Ensure directory exists
+        os.makedirs(base_dir, exist_ok=True)
+        
+        # Save the summary to a text file
+        with open(summary_file_path, "w", encoding="utf-8") as file:
+            file.write(summary)
+
+        return "/summary.txt"  # Return the relative public path
     except Exception as e:
         st.error(f"❌ Error generating summary: {e}")
         return None
