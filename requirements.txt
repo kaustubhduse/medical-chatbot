@@ -6,7 +6,6 @@ langchain-community
 sentence-transformers
 openai
 faiss-cpu
-pyaudio
 pygame
 gtts
 pyttsx3
