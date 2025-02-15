@@ -175,8 +175,5 @@ def main():
                     st.error(f"\u274c Error: {e}")
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    main()
 =======
     main()
->>>>>>> 16a4820 (Improved styling and animations for Search component)

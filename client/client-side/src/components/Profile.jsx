@@ -13,7 +13,7 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import Modal from "./Modal"; // Import the Modal component
-
+const url = import.meta.env.VITE_SERVER_URI;
 function Profile() {
   const [user, setUser] = useState({ name: "", email: "" });
   const [loading, setLoading] = useState(false);
@@ -36,12 +36,9 @@ function Profile() {
           return;
         }
 
-        const response = await axios.get(
-          "http://localhost:3000/user/get-profile",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await axios.get(`${url}/user/get-profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setUser(response.data);
       } catch (error) {
         toast.error("Failed to load profile. Please try again.");
@@ -66,7 +63,7 @@ function Profile() {
       const updatedData = { name: user.name, email: user.email };
 
       const response = await axios.put(
-        "http://localhost:3000/user/update-profile",
+        `${url}user/update-profile`,
         updatedData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -93,7 +90,7 @@ function Profile() {
       }
 
       const response = await axios.put(
-        "http://localhost:3000/user/update-password",
+        `${url}/user/update-password`,
         {
           prevPassword: passwords.prevPassword,
           newPassword: passwords.newPassword,
@@ -233,7 +230,6 @@ function Profile() {
           </button>
         </div>
       </Modal>
-
     </div>
   );
 }
