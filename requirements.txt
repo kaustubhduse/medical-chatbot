@@ -1,0 +1,16 @@
+streamlit
+python-dotenv
+PyPDF2
+langchain
+langchain-community
+sentence-transformers
+openai
+faiss-cpu
+pyaudio
+pygame
+gtts
+pyttsx3
+pdfplumber
+pandas
+plotly.express
+SpeechRecognition
