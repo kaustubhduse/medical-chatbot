@@ -7,7 +7,7 @@ sentence-transformers
 openai
 faiss-cpu
 pygame
-espeak
+pyaudio
 gtts
 pyttsx3
 pdfplumber
