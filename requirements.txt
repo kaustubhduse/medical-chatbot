@@ -7,7 +7,7 @@ sentence-transformers
 openai
 faiss-cpu
 pygame
-pyaudio==0.2.14
+pyaudio==0.2.11
 gtts
 pyttsx3
 pdfplumber
