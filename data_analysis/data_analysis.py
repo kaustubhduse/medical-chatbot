@@ -2,47 +2,56 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import re
-import seaborn as sns
+from PyPDF2 import PdfReader
 
-# Extract metrics from text using regex
+# Extract text from PDF
+def extract_text_from_pdf(uploaded_file):
+    reader = PdfReader(uploaded_file)
+    text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+    return text
+
+# Extract metrics from text using updated regex
 def extract_health_metrics(text):
     metrics = {}
     patterns = {
-        'Hemoglobin': r'Hemoglobin.*?:\s*([\d.]+)',
-        'WBC': r'(?:White\s*Blood\s*Cell.*?|WBC.*?)[:\s]*([\d,]+)',
-        'Platelets': r'Platelet.*?:\s*([\d,]+)',
-        'RBC': r'RBC.*?:\s*([\d.]+)',
-        'Cholesterol': r'Total\s*Cholesterol.*?:\s*([\d.]+)',
-        'HDL': r'HDL\s*Cholesterol.*?:\s*([\d.]+)',
-        'LDL': r'LDL\s*Cholesterol.*?:\s*([\d.]+)',
-        'Triglycerides': r'Triglycerides.*?:\s*([\d.]+)',
-        'Glucose': r'(?:Fasting\s*Blood\s*Sugar|Glucose).*?:\s*([\d.]+)',
-        'HbA1c': r'HbA1c.*?:\s*([\d.]+)',
-        'T3': r'T3.*?:\s*([\d.]+)',
-        'T4': r'T4.*?:\s*([\d.]+)',
-        'TSH': r'TSH.*?:\s*([\d.]+)',
-        'Vitamin B12': r'Vitamin\s*B12.*?:\s*[<]?\s*([\d.]+)',
-        'PSA': r'Prostate Specific Antigen.*?:\s*([\d.]+)',
-        'IgE': r'IgE.*?:\s*([\d.]+)',
-        'Blood Pressure': r'(?:Blood Pressure|BP).*?:?\s*(\d+/\d+)',
+        'Hemoglobin': r"Hemoglobin\s+([\d.]+)",
+        'RBC Count': r"RBC\s+Count\s+([\d.]+)",
+        'Hematocrit': r"Hematocrit\s+([\d.]+)",
+        'MCV': r"MCV\s+([\d.]+)",
+        'MCH': r"MCH\s+([\d.]+)",
+        'MCHC': r"MCHC\s+([\d.]+)",
+        'RDW CV': r"RDW\s+CV\s+([\d.]+)",
+        'WBC': r"WBC\s+Count\s+([\d,]+)",
+        'Neutrophils': r"Neutrophils\s+([\d]+)",
+        'Lymphocytes': r"Lymphocytes\s+([\d]+)",
+        'Eosinophils': r"Eosinophils\s+([\d]+)",
+        'Monocytes': r"Monocytes\s+([\d]+)",
+        'Basophils': r"Basophils\s+([\d]+)",
+        'Platelets': r"Platelet\s+Count\s+([\d,]+)",
+        'MPV': r"MPV\s+([\d.]+)",
+        'ESR': r"ESR\s+([\d.]+)",
+        'Cholesterol': r"Cholesterol\s+([\d.]+)",
+        'Triglycerides': r"Triglyceride[s]?\s+([\d.]+)",
+        'HDL': r"HDL\s+Cholesterol\s+([\d.]+)",
+        'LDL': r"Direct\s+LDL\s+([\d.]+)",
+        'VLDL': r"VLDL\s+([\d.]+)",
+        'CHOL/HDL Ratio': r"CHOL/HDL\s+Ratio\s+([\d.]+)",
+        'LDL/HDL Ratio': r"LDL/HDL\s+Ratio\s+([\d.]+)",
+        'ABO Type': r"ABO\s+Type\s+\"?([ABO]+)\"?",
+        'Rh (D) Type': r"Rh\s+\(D\)\s+Type\s+(Positive|Negative)"
     }
 
-    for metric, pattern in patterns.items():
+    for key, pattern in patterns.items():
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             val = match.group(1).replace(",", "").strip()
-            val_match = re.match(r"[\d./]+", val)
-            if not val_match:
-                continue
-            val = val_match.group()
             try:
-                if '/' in val:
-                    metrics[metric] = val  # BP case
+                if "/" in val:
+                    metrics[key] = val
                 else:
-                    metrics[metric] = float(val)
+                    metrics[key] = float(val)
             except ValueError:
                 continue
-
     return metrics
 
 # Display metrics in a table and bar chart
@@ -58,7 +67,7 @@ def display_metric_summary(metrics):
     numeric_df = df[df['Value'].apply(lambda x: isinstance(x, (int, float)))]
     st.bar_chart(numeric_df.set_index("Metric"))
 
-# Simple rule-based prediction system
+# Health condition prediction logic
 def predict_conditions(metrics):
     st.subheader("🧠 AI-based Risk Assessment")
 
@@ -96,21 +105,20 @@ def predict_conditions(metrics):
     if 'IgE' in metrics and metrics['IgE'] > 300:
         st.warning("🟡 Elevated IgE - Possible Allergy or Parasitic Infection")
 
-    if 'Blood Pressure' in metrics:
-        try:
-            sys, dia = map(int, metrics['Blood Pressure'].split('/'))
-            if sys >= 140 or dia >= 90:
-                st.error("🔴 Hypertension Detected")
-            elif sys >= 120 or dia >= 80:
-                st.warning("🟡 Prehypertension")
-            else:
-                st.success("🟢 Blood Pressure is normal")
-        except:
-            st.warning("❌ Could not parse blood pressure reading.")
-
-# Optional: Download analytics as a report (CSV)
+# Optional: Download analytics as CSV
 def download_metrics(metrics):
     if metrics:
         df = pd.DataFrame(metrics.items(), columns=["Metric", "Value"])
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Download Report", csv, "health_metrics.csv", "text/csv")
+
+# Streamlit UI
+st.title("🩺 Health Metrics Extractor from PDF")
+uploaded_file = st.file_uploader("📄 Upload Your Health Report (PDF)", type=["pdf"])
+
+if uploaded_file:
+    text = extract_text_from_pdf(uploaded_file)
+    metrics = extract_health_metrics(text)
+    display_metric_summary(metrics)
+    predict_conditions(metrics)
+    download_metrics(metrics)

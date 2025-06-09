@@ -155,22 +155,25 @@ def main():
                     return
 
                 st.session_state.pdf_text = raw_text
+
+                # Generate summary but DO NOT display it
                 summary = summarize_text(raw_text)
                 if summary:
                     st.session_state.summary = summary
-                    st.success("✅ Summary generated!")
+                    st.download_button(
+                        "📥 Download Medical Summary", 
+                        summary.encode('utf-8'), 
+                        file_name="medical_summary.txt", 
+                        mime="text/plain"
+                    )
 
-                    # Show summary with download button
-                    st.markdown("### 📝 Summary:")
-                    st.write(summary)
-                    st.download_button("📥 Download Summary as Text", summary.encode('utf-8'), file_name="summary.txt")
-
-                # Extract health metrics from the text
+                # Extract health metrics and display
                 metrics = extract_health_metrics(raw_text)
                 display_metric_summary(metrics)
                 predict_conditions(metrics)
                 download_metrics(metrics)
 
+                # Text chunking + vectorstore + conversation setup
                 text_chunks = get_text_chunks(raw_text)
                 if not text_chunks:
                     return
@@ -184,6 +187,7 @@ def main():
                     st.success("✅ Processing complete! You can now ask questions.")
                 except ValueError as e:
                     st.error(f"❌ Error: {e}")
+
 
 
 if __name__ == '__main__':
