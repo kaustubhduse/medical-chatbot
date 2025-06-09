@@ -15,4 +15,6 @@ gtts
 pdfplumber
 pandas
 plotly.express
+matplotlib
+
 
