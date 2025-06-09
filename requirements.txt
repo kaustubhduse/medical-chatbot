@@ -16,5 +16,7 @@ pdfplumber
 pandas
 plotly.express
 matplotlib
+seaborn
+
 
 
