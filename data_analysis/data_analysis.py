@@ -9,22 +9,23 @@ import seaborn as sns
 def extract_health_metrics(text):
     metrics = {}
     patterns = {
-        'Hemoglobin': r'Hemoglobin[:\s]*([\d.]+)',
-        'RBC': r'RBC[:\s]*([\d.]+)',
-        'WBC': r'WBC[:\s]*([\d.]+)',
-        'Platelets': r'Platelets[:\s]*([\d,]+)',
-        'Glucose': r'Glucose[:\s]*([\d.]+)',
-        'Creatinine': r'Creatinine[:\s]*([\d.]+)',
-        'Urea': r'Urea[:\s]*([\d.]+)',
-        'Cholesterol': r'Cholesterol[:\s]*([\d.]+)',
-        'Blood Pressure': r'BP[:\s]*(\d+/\d+)',
+      'Hemoglobin': r'Hemoglobin.*?:\s*([\d.]+)',                # allows anything between Hemoglobin and colon
+      'RBC': r'RBC.*?:\s*([\d.]+)',
+      'WBC': r'WBC.*?:\s*([\d,]+)',                            # allow commas in numbers (e.g. 10,570)
+      'Platelets': r'Platelet.*?:\s*([\d,]+)',
+      'Glucose': r'Glucose.*?:\s*([\d.]+)',
+      'Creatinine': r'Creatinine.*?:\s*([\d.]+)',
+      'Urea': r'Urea.*?:\s*([\d.]+)',
+      'Cholesterol': r'Cholesterol.*?:\s*([\d.]+)',
+      'Blood Pressure': r'(?:Blood Pressure|BP).*?:?\s*(\d+/\d+)',
     }
 
     for metric, pattern in patterns.items():
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
+            val = match.group(1).replace(",", "").strip()
+            val = re.match(r"[\d.]+", val).group()
             try:
-                val = match.group(1).replace(",", "")
                 if '/' in val:
                     metrics[metric] = val  # BP case
                 else:
@@ -39,7 +40,7 @@ def display_metric_summary(metrics):
     if not metrics:
         st.warning("⚠️ No recognizable health metrics found.")
         return
-
+    
     st.subheader("📊 Extracted Health Metrics")
     df = pd.DataFrame(metrics.items(), columns=["Metric", "Value"])
     st.table(df)
