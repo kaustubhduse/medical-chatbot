@@ -4,67 +4,89 @@ import json
 import re
 
 def parse_llm_summary(summary_text):
-    """Extract structured data from LLM's JSON summary"""
+    """Robust JSON extraction from LLM output"""
     try:
-        # Clean potential markdown code blocks
+        # Remove markdown code blocks
         clean_summary = re.sub(r'``````', '', summary_text)
-        data = json.loads(clean_summary)
+        
+        # Extract JSON array using regex
+        json_match = re.search(r'\[.*\]', clean_summary, re.DOTALL)
+        if not json_match:
+            return []
+            
+        json_str = json_match.group(0)
+        
+        # Fix common JSON issues
+        json_str = json_str.replace("'", '"')  # Replace single quotes
+        json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas
+        
+        data = json.loads(json_str)
+        
+        # Add missing fields and clean data
+        required_fields = ['metric', 'value', 'reference_range', 'unit', 'status']
+        for item in data:
+            for field in required_fields:
+                if field not in item:
+                    item[field] = 'N/A'
+            item['metric'] = item['metric'].strip().title()
+            
         return data
-    except json.JSONDecodeError:
-        st.error("Failed to parse LLM summary")
+        
+    except Exception as e:
+        st.error(f"Parsing error: {str(e)}")
         return []
 
 def display_metric_summary(metrics_data):
-    """Display metrics from parsed JSON data"""
+    """Display metrics with interactive components"""
     if not metrics_data:
-        st.warning("⚠️ No health metrics found in summary")
+        st.warning("⚠️ No health metrics found")
         return
     
-    # Create DataFrame with consistent columns
     df = pd.DataFrame(metrics_data)
     
-    # Ensure required columns exist
-    for col in ['metric', 'value', 'reference_range', 'status']:
-        if col not in df.columns:
-            df[col] = 'N/A'
+    # Convert numeric values
+    df['value'] = pd.to_numeric(df['value'], errors='coerce')
     
+    # Create styled dataframe
     st.subheader("📊 Health Metrics Analysis")
     st.dataframe(
-        df[['metric', 'value', 'reference_range', 'status']],
-        use_container_width=True
+        df[['metric', 'value', 'unit', 'reference_range', 'status']],
+        use_container_width=True,
+        hide_index=True
     )
     
-    # Display interactive chart
-    if 'value' in df:
-        numeric_df = df[pd.to_numeric(df['value'], errors='coerce').notnull()]
-        if not numeric_df.empty:
-            st.bar_chart(numeric_df.set_index('metric')['value'])
+    # Visualize numeric metrics
+    if not df.empty and 'value' in df:
+        st.bar_chart(df.set_index('metric')['value'])
 
 def predict_conditions(metrics_data):
-    """Generate insights from parsed JSON data"""
-    st.subheader("🧠 AI Clinical Insights")
+    """Generate clinical insights"""
+    st.subheader("🧠 Clinical Risk Assessment")
     
-    # Simple validation check
     if not isinstance(metrics_data, list):
         st.error("Invalid data format")
         return
     
-    # Create analysis from LLM's status indications
-    for item in metrics_data:
-        if item.get('status', '').lower() == 'low':
-            st.warning(f"🟡 Low {item['metric']}: {item['value']} (Ref: {item.get('reference_range', 'N/A')})")
-        elif item.get('status', '').lower() == 'high':
-            st.error(f"🔴 High {item['metric']}: {item['value']} (Ref: {item.get('reference_range', 'N/A')})")
+    for test in metrics_data:
+        metric = test.get('metric', 'Unknown')
+        value = test.get('value', '')
+        ref_range = test.get('reference_range', 'N/A')
+        status = test.get('status', '').lower()
+        
+        if status == 'low':
+            st.warning(f"🟡 Low {metric}: {value} (Ref: {ref_range})")
+        elif status == 'high':
+            st.error(f"🔴 High {metric}: {value} (Ref: {ref_range})")
 
 def download_metrics(metrics_data):
-    """Create downloadable report from JSON data"""
+    """Generate downloadable CSV report"""
     if metrics_data:
         df = pd.DataFrame(metrics_data)
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button(
-            "📥 Download Full Report", 
-            csv, 
-            "medical_analysis.csv", 
+            "📥 Download Full Report",
+            csv,
+            "medical_analysis.csv",
             "text/csv",
-            help="Contains all extracted metrics and reference ranges"
+            help="Contains complete analysis of all medical metrics"
         )
