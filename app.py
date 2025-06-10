@@ -211,7 +211,7 @@ def main():
                 comparator = ReportComparator(st.session_state.vectorstore)
                 # Compute embedding for the current report text
                 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-                text_embedding = embedding_model.embed_documents([raw_text])[0]
+                text_embedding = embedding_model.embed_documents(raw_text)
                 similar_reports = comparator.find_similar_reports(text_embedding)
                 
                 if similar_reports:
