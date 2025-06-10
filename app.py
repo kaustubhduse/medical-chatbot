@@ -10,7 +10,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
 import os
-from data_analysis import (
+from data_analysis.data_analysis import (
     extract_health_metrics,
     extract_reference_ranges,
     display_metric_summary,
