@@ -82,6 +82,7 @@ def create_clinical_summary_pdf(metrics_df):
     """Generate PDF report with visualizations"""
     from fpdf import FPDF
     import plotly.io as pio
+    import tempfile
 
     pdf = FPDF()
     pdf.add_page()
@@ -107,10 +108,9 @@ def create_clinical_summary_pdf(metrics_df):
     # Add visualization
     fig = plot_metric_comparison(metrics_df, silent=True)
     if fig:
-        img_buffer = BytesIO()
-        pio.write_image(fig, img_buffer, format='png', engine='kaleido')
-        img_buffer.seek(0)
-        pdf.image(img_buffer, x=10, y=pdf.get_y(), w=180)
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmpfile:
+            pio.write_image(fig, tmpfile.name, format='png', engine='kaleido')
+            pdf.image(tmpfile.name, x=10, y=pdf.get_y(), w=180)
 
     # Get PDF content as bytes
     pdf_content = pdf.output(dest='S').encode('latin1')
