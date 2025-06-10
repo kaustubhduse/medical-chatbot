@@ -196,7 +196,8 @@ def main():
                 
                 # 1. Disease risk prediction
                 predictor = DiseasePredictor()
-                risk_assessment = predictor.predict_risk(parsed_data)
+                metrics_dict = {item['metric']: item['value'] for item in parsed_data}
+                risk_assessment = predictor.predict_risk(metrics_dict)
                 
                 st.subheader("🩺 Disease Risk Assessment")
                 if 'anemia' in risk_assessment:
