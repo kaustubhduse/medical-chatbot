@@ -59,7 +59,7 @@ def summarize_text(text):
             "- Recommendations for further tests, treatments, or follow-up (in bullet points)\n"
             "\n"
             "Write the summary in clear, plain language that is understandable to both medical professionals and patients. "
-            "If any information is missing or not specified, note that in the summary.\n\n"
+            "Also give all sample tests and its results in a table format and also whether they are normal or not.\n\n"
             f"{text}"
         )
         summary = llm.predict(summary_prompt)
