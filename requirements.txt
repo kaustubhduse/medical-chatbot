@@ -18,6 +18,7 @@ pandas
 plotly.express
 matplotlib
 seaborn
+kaleido 
 
 
 
