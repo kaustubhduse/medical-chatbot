@@ -45,6 +45,21 @@ def extract_health_metrics(text):
 
     return metrics
 
+def clean_metric_name(name):
+    """Standardize metric names for matching."""
+    name = name.lower()
+    name = re.sub(r'[^a-z0-9]', '', name)
+    mapping = {
+        'hb': 'hemoglobin',
+        'packedcellvolume': 'hematocrit',
+        'pcv': 'hematocrit',
+        'tlc': 'wbc',
+        'plt': 'platelets',
+        'plateletcount': 'platelets',
+        'redbloodcell': 'rbc'
+    }
+    return mapping.get(name, name)
+
 def clean_numeric(value):
     """Convert string numbers to float/int, handle BP as string."""
     try:
@@ -57,32 +72,48 @@ def clean_numeric(value):
     except:
         return None
 
+# ========== REFERENCE RANGE EXTRACTION ==========
+
+def extract_reference_ranges(text):
+    """
+    Extract reference ranges for each metric from the report text.
+    Returns a dict: {metric_name: (low, high)}
+    """
+    ref_ranges = {}
+
+    # Table row pattern: Metric | Value | ... | Reference Range | Unit
+    table_row_pattern = re.compile(
+        r'([A-Za-z \(\)%]+)[\s|:&]+[\d.,/]+[\s|:&]+[A-Za-z]*[\s|:&]+([\d.]+)\s*-\s*([\d.]+)', re.IGNORECASE
+    )
+    for match in table_row_pattern.finditer(text):
+        metric = clean_metric_name(match.group(1))
+        low = float(match.group(2))
+        high = float(match.group(3))
+        ref_ranges[metric] = (low, high)
+
+    # Inline pattern: Metric ... reference range ... low - high
+    inline_pattern = re.compile(
+        r'([A-Za-z \(\)%]+)[^\n]*reference\s*range[^\d]*(\d+\.?\d*)\s*-\s*(\d+\.?\d*)', re.IGNORECASE
+    )
+    for match in inline_pattern.finditer(text):
+        metric = clean_metric_name(match.group(1))
+        low = float(match.group(2))
+        high = float(match.group(3))
+        ref_ranges[metric] = (low, high)
+
+    return ref_ranges
+
 # ========== DISPLAY AND ANALYSIS ==========
 
-REFERENCE_RANGES = {
-    'Hemoglobin': (13, 17),
-    'WBC': (4000, 11000),
-    'Platelets': (150000, 410000),
-    'RBC': (4.5, 5.5),
-    'Hematocrit': (40, 50),
-    'MCV': (83, 101),
-    'MCH': (27, 32),
-    'MCHC': (32.5, 34.5),
-    'RDW': (11.6, 14.0),
-    'Neutrophils': (50, 62),
-    'Lymphocytes': (20, 40),
-    'Eosinophils': (0, 6),
-    'Monocytes': (0, 10),
-    'Basophils': (0, 2)
-}
-
-def display_metric_summary(metrics):
+def display_metric_summary(metrics, ref_ranges=None):
     if not metrics:
         st.warning("⚠️ No recognizable health metrics found.")
         return
     rows = []
     for metric, value in metrics.items():
-        ref = REFERENCE_RANGES.get(metric, ("N/A", "N/A"))
+        # Try to match metric name using cleaned version
+        metric_key = clean_metric_name(metric)
+        ref = ref_ranges.get(metric_key, ("N/A", "N/A")) if ref_ranges else ("N/A", "N/A")
         status = get_status(value, ref)
         rows.append({
             "Metric": metric,
@@ -112,28 +143,30 @@ def get_status(value, ref):
     except:
         return "Unknown"
 
-def predict_conditions(metrics):
+def predict_conditions(metrics, ref_ranges=None):
     st.subheader("🧠 AI-based Risk Assessment")
-    if 'Hemoglobin' in metrics and metrics['Hemoglobin'] < 13:
-        st.error(f"🔴 Anemia: Low hemoglobin ({metrics['Hemoglobin']} g/dL)")
-    if 'Hematocrit' in metrics and metrics['Hematocrit'] > 50:
-        st.warning(f"🟡 High PCV/Hematocrit ({metrics['Hematocrit']}%)")
-    if 'WBC' in metrics:
-        wbc = metrics['WBC']
-        if wbc > 11000:
-            st.warning(f"🟡 High WBC ({wbc}) - Possible infection")
-        elif wbc < 4000:
-            st.warning(f"🟡 Low WBC ({wbc}) - Possible immune issue")
-    if 'Platelets' in metrics:
-        plt = metrics['Platelets']
-        if plt < 150000:
-            st.error(f"🔴 Low platelets ({plt}) - Bleeding risk")
-        elif plt > 410000:
-            st.warning(f"🟡 High platelets ({plt}) - Possible inflammation")
+    # You can enhance this logic as needed
+    if 'Hemoglobin' in metrics and ref_ranges:
+        hb = metrics['Hemoglobin']
+        ref = ref_ranges.get('hemoglobin', (13, 17))
+        if hb < ref[0]:
+            st.error(f"🔴 Anemia: Low hemoglobin ({hb})")
+        elif hb > ref[1]:
+            st.warning(f"🟡 High hemoglobin ({hb})")
+    # Add more conditions as needed...
 
-def download_metrics(metrics):
+def download_metrics(metrics, ref_ranges=None):
     if metrics:
-        df = pd.DataFrame(metrics.items(), columns=["Metric", "Value"])
+        rows = []
+        for metric, value in metrics.items():
+            metric_key = clean_metric_name(metric)
+            ref = ref_ranges.get(metric_key, ("N/A", "N/A")) if ref_ranges else ("N/A", "N/A")
+            rows.append({
+                "Metric": metric,
+                "Value": value,
+                "Reference Range": f"{ref[0]} - {ref[1]}" if ref[0] != "N/A" else "N/A"
+            })
+        df = pd.DataFrame(rows)
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button(
             "📥 Download Metrics (CSV)", 

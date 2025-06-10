@@ -10,8 +10,9 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
 import os
-from data_analysis.data_analysis import (
+from data_analysis import (
     extract_health_metrics,
+    extract_reference_ranges,
     display_metric_summary,
     predict_conditions,
     download_metrics
@@ -175,9 +176,10 @@ def main():
 
                 # Extract health metrics and display
                 metrics = extract_health_metrics(raw_text)
-                display_metric_summary(metrics)
-                predict_conditions(metrics)
-                download_metrics(metrics)
+                refer_ranges = extract_reference_ranges(raw_text)
+                display_metric_summary(metrics, refer_ranges)
+                predict_conditions(metrics, refer_ranges)
+                download_metrics(metrics, refer_ranges)
 
                 # Text chunking + vectorstore + conversation setup
                 text_chunks = get_text_chunks(raw_text)
