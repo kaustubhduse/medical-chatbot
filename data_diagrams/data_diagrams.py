@@ -108,16 +108,14 @@ def create_clinical_summary_pdf(metrics_df):
     fig = plot_metric_comparison(metrics_df, silent=True)
     if fig:
         img_buffer = BytesIO()
-        # Use plotly's write_image (requires kaleido)
-        pio.write_image(fig, img_buffer, format='png')
+        pio.write_image(fig, img_buffer, format='png', engine='kaleido')
         img_buffer.seek(0)
         pdf.image(img_buffer, x=10, y=pdf.get_y(), w=180)
 
-    # Save to buffer
-    pdf_buffer = BytesIO()
-    pdf.output(pdf_buffer)
-    pdf_buffer.seek(0)
-    return pdf_buffer.getvalue()
+    # Get PDF content as bytes
+    pdf_content = pdf.output(dest='S').encode('latin1')
+    return pdf_content
+
 
 def display_reference_table(metrics_df):
     """Interactive reference table with filtering"""

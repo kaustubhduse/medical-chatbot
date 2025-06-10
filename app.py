@@ -204,11 +204,10 @@ def main():
                     generate_radial_health_score(metrics_df)
                     
                 # Interactive table
-                    display_reference_table(metrics_df)
+                display_reference_table(metrics_df)
                 
                 # PDF Report
-                    pdf_report = create_clinical_summary_pdf(metrics_df)
-                    
+                pdf_report = create_clinical_summary_pdf(metrics_df)
                 st.download_button(
                    "📄 Download Full PDF Report",
                    pdf_report,
