@@ -49,13 +49,19 @@ def summarize_text(text):
         )
 
         summary_prompt = (
-            "Summarize the following medical report in a clear and concise manner. "
-            "Give the name of the patient, date of report, and any relevant medical history in points. "
-            "Highlight key observations, diagnoses, and recommendations. "
-            "Ensure the summary is understandable for both medical professionals and patients.\n\n"
+            "You are a medical expert assistant. Carefully read and summarize the following medical report. "
+            "Your summary should include:\n"
+            "- Patient's name (if available)\n"
+            "- Date of the report (if available)\n"
+            "- Relevant medical history or background (in bullet points)\n"
+            "- Key findings and observations (in bullet points)\n"
+            "- Diagnoses or impressions (if mentioned)\n"
+            "- Recommendations for further tests, treatments, or follow-up (in bullet points)\n"
+            "\n"
+            "Write the summary in clear, plain language that is understandable to both medical professionals and patients. "
+            "If any information is missing or not specified, note that in the summary.\n\n"
             f"{text}"
         )
-
         summary = llm.predict(summary_prompt)
         return summary
     except Exception as e:
