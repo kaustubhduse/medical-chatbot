@@ -58,10 +58,12 @@ def summarize_text(text):
             "- Diagnoses or impressions (if mentioned)\n"
             "- Recommendations for further tests, treatments, or follow-up (in bullet points)\n"
             "\n"
-            "Write the summary in clear, plain language that is understandable to both medical professionals and patients. "
-            "Read the following medical report. For each test, output a JSON object with these fields: "
-            "'metric', 'value', 'reference_range', and 'status' (Low/Normal/High). "
-            "If any field is missing, use null. Output only a JSON array. \n\n"
+            "Extract medical metrics as JSON array with the following fields:\n"
+            "- metric: Test name\n"
+            "- value: Numeric result\n"
+            "- reference_range: X-Y format\n"
+            "-unit: Measurement unit \n"
+            "Return metrics only in JSON format and other information in plain text.\n"
             f"{text}"
         )
         summary = llm.predict(summary_prompt)
