@@ -1,31 +1,39 @@
 # similarity.py
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 class ReportComparator:
     def __init__(self, vectorstore):
-        """Initialize with a vectorstore containing embeddings and reports"""
+        """Initialize with a LangChain FAISS vectorstore"""
         self.vectorstore = vectorstore
+        self.index = vectorstore.index  # Direct access to FAISS index
+        self.docstore = vectorstore.docstore
 
     def find_similar_reports(self, embedding, k=5):
-        """Find top-k similar reports based on cosine similarity"""
-        # Get all embeddings from vectorstore
-        all_embeddings = self.vectorstore.get_vectors()  # Assumes this method exists
-        if all_embeddings is None or len(all_embeddings) == 0:
-            return []
-
-        # Compute cosine similarity
-        similarities = cosine_similarity([embedding], all_embeddings)[0]
-
-        # Get indices of top-k similar reports (highest similarity first)
-        top_indices = np.argsort(similarities)[::-1][:k]
-
-        # Retrieve corresponding reports or metadata
-        similar_reports = [self.vectorstore.get_report(i) for i in top_indices]  # Assumes get_report method
-
-        # Return list of (report, similarity_score)
-        return [(similar_reports[i], similarities[top_indices[i]]) for i in range(len(top_indices))]
+        """Find top-k similar reports using FAISS native search"""
+        # Convert to numpy array with proper dtype
+        query_embedding = np.array([embedding], dtype=np.float32)
+        
+        # Search FAISS index
+        distances, indices = self.index.search(query_embedding, k)
+        
+        # Retrieve documents from docstore
+        similar_docs = []
+        for idx in indices[0]:
+            if idx in self.vectorstore.index_to_docstore_id:
+                doc_id = self.vectorstore.index_to_docstore_id[idx]
+                doc = self.docstore.search(doc_id)
+                similar_docs.append((doc, 1 - distances[0][0]))  # Convert distance to similarity
+        
+        return similar_docs
 
     def add_report(self, embedding, report_metadata):
-        """Add a new report embedding and metadata to the vectorstore"""
-        self.vectorstore.add(embedding, report_metadata)
+        """Add a new report to the vectorstore"""
+        # Convert to numpy array with proper dtype
+        embedding_array = np.array([embedding], dtype=np.float32)
+        
+        # Use LangChain's add_embeddings method
+        self.vectorstore.add_embeddings(
+            text_embeddings=[(report_metadata['content'], embedding_array[0])],
+            metadatas=[report_metadata],
+            ids=[report_metadata['id']]
+        )

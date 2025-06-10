@@ -107,7 +107,10 @@ def get_vectorstore(text_chunks):
     model_name = "sentence-transformers/all-mpnet-base-v2"
     embeddings = HuggingFaceEmbeddings(model_name=model_name)
 
-    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    vectorstore = FAISS.from_texts(
+        texts=text_chunks, 
+        embedding=embeddings,
+        metadatas=[{}]*len(text_chunks))
     return vectorstore
 
 
