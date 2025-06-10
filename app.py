@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
@@ -9,6 +10,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
+
 import os
 from data_analysis.data_analysis import (
     parse_llm_summary,
@@ -16,6 +18,14 @@ from data_analysis.data_analysis import (
     predict_conditions,
     download_metrics
 )
+
+from data_diagrams.data_diagrams import (
+    plot_metric_comparison,
+    generate_radial_health_score,
+    display_reference_table,
+    create_clinical_summary_pdf
+)
+
 
 # Load environment variables
 load_dotenv()
@@ -179,8 +189,34 @@ def main():
 
                 # Extract health metrics and display
                 parsed_data = parse_llm_summary(summary)
+                 # Convert to DataFrame for diagrams
+                metrics_df = pd.DataFrame(parsed_data)
+                
                 display_metric_summary(parsed_data)
                 predict_conditions(parsed_data)
+                
+                # New visualizations
+                st.subheader("📈 Interactive Visual Analysis")
+                col1, col2 = st.columns(2)
+                with col1:
+                    plot_metric_comparison(metrics_df)
+                with col2:
+                    generate_radial_health_score(metrics_df)
+                    
+                # Interactive table
+                    display_reference_table(metrics_df)
+                
+                # PDF Report
+                    pdf_report = create_clinical_summary_pdf(metrics_df)
+                    
+                st.download_button(
+                   "📄 Download Full PDF Report",
+                   pdf_report,
+                   "clinical_report.pdf",
+                   "application/pdf"
+                )
+                
+                # Existing CSV download
                 download_metrics(parsed_data)
 
                 # Text chunking + vectorstore + conversation setup

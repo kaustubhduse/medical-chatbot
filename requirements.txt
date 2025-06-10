@@ -6,6 +6,7 @@ langchain-community
 sentence-transformers
 openai
 faiss-cpu
+fpdf
 pygame
 sounddevice
 numpy
