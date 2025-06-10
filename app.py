@@ -11,8 +11,7 @@ from langchain.chains import ConversationalRetrievalChain
 
 import os
 from data_analysis.data_analysis import (
-    extract_health_metrics,
-    extract_reference_ranges,
+    parse_llm_summary,
     display_metric_summary,
     predict_conditions,
     download_metrics
@@ -60,7 +59,9 @@ def summarize_text(text):
             "- Recommendations for further tests, treatments, or follow-up (in bullet points)\n"
             "\n"
             "Write the summary in clear, plain language that is understandable to both medical professionals and patients. "
-            "Also give all sample tests and its results in a table format and also whether they are normal or not.\n\n"
+            "Read the following medical report. For each test, output a JSON object with these fields: "
+            "'metric', 'value', 'reference_range', and 'status' (Low/Normal/High). "
+            "If any field is missing, use null. Output only a JSON array. \n\n"
             f"{text}"
         )
         summary = llm.predict(summary_prompt)
@@ -175,11 +176,10 @@ def main():
                     )
 
                 # Extract health metrics and display
-                metrics = extract_health_metrics(raw_text)
-                refer_ranges = extract_reference_ranges(raw_text)
-                display_metric_summary(metrics, refer_ranges)
-                predict_conditions(metrics, refer_ranges)
-                download_metrics(metrics, refer_ranges)
+                parsed_data = parse_llm_summary(summary)
+                display_metric_summary(parsed_data)
+                predict_conditions(parsed_data)
+                download_metrics(parsed_data)
 
                 # Text chunking + vectorstore + conversation setup
                 text_chunks = get_text_chunks(raw_text)
