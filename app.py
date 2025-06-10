@@ -25,7 +25,9 @@ from data_diagrams.data_diagrams import (
     display_reference_table,
     create_clinical_summary_pdf
 )
-
+from data_analysis.predictive import DiseasePredictor
+from data_analysis.similarity import ReportComparator
+from data_analysis.trends import show_trend_analysis, detect_anomalies
 
 # Load environment variables
 load_dotenv()
@@ -191,6 +193,46 @@ def main():
                 parsed_data = parse_llm_summary(summary)
                  # Convert to DataFrame for diagrams
                 metrics_df = pd.DataFrame(parsed_data)
+                
+                # 1. Disease risk prediction
+                predictor = DiseasePredictor()
+                risk_assessment = predictor.predict_risk(parsed_data)
+                
+                st.subheader("🩺 Disease Risk Assessment")
+                if 'anemia' in risk_assessment:
+                    st.progress(risk_assessment['anemia']['probability'])
+                    st.markdown(risk_assessment['anemia']['advice'])
+                    
+                # 2. Similar Report Detection
+                comparator = ReportComparator(st.session_state.vectorstore)
+                # Compute embedding for the current report text
+                embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+                text_embedding = embedding_model.embed_documents([raw_text])[0]
+                similar_reports = comparator.find_similar_reports(text_embedding)
+                
+                if similar_reports:
+                    st.subheader("🔍 Similar Reports Found")
+                    for report, similarity in similar_reports:
+                        st.write(f"**{similarity:.1%} match**: {report['diagnosis']}")
+
+                
+                # 3. Time Series Analysis
+                if len(pdf_docs) > 1:  # Only show trends if multiple reports
+                    # Process multiple reports to extract historical data
+                    def process_multiple_reports(pdf_docs):
+                        historical_data = []
+                        for pdf in pdf_docs:
+                            text = get_pdf_text([pdf])
+                            if text:
+                                summary = summarize_text(text)
+                                if summary:
+                                    parsed = parse_llm_summary(summary)
+                                    historical_data.append(parsed)
+                        return historical_data
+
+                    historical_data = process_multiple_reports(pdf_docs)
+                    show_trend_analysis(historical_data)
+        
                 
                 display_metric_summary(parsed_data)
                 predict_conditions(parsed_data)

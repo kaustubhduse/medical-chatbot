@@ -7,11 +7,14 @@ sentence-transformers
 openai
 faiss-cpu
 fpdf
+fbprophet
+herepy
 pygame
 sounddevice
 numpy
 scipy
 speechrecognition
+scikit-learn
 gtts
 pdfplumber
 pandas
