@@ -7,7 +7,7 @@ sentence-transformers
 openai
 faiss-cpu
 fpdf
-fbprophet
+prophet
 herepy
 pygame
 sounddevice
@@ -22,6 +22,6 @@ plotly.express
 matplotlib
 seaborn
 kaleido 
-
+cython
 
 
