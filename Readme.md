@@ -1,10 +1,3 @@
-You're right — let’s finalize this `README.md` so it’s clean, properly structured, and includes your summary of steps at the end.
-
-Here’s the complete and corrected `README.md` for your **Medical Report Chatbot** — with the correct markdown formatting, image reference, setup steps, and your processing flow at the bottom:
-
----
-
-````markdown
 # ⚕️ Medical Report Chatbot using LLMs, Streamlit, and FAISS
 
 This project is a Streamlit-based Medical Assistant that allows users to upload PDF medical reports and interact with them using Large Language Models (LLMs). The app performs summarization, extracts health metrics, predicts disease risks, detects similar reports, and visualizes health trends — all in one place.
