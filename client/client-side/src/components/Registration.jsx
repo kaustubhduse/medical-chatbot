@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 
-const url = import.meta.env.VITE_SERVER_URI;
+const url = import.meta.env.VITE_SERVER_URI || "http://localhost:3000";
 const Registration = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
