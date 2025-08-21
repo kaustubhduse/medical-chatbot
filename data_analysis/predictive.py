@@ -1,5 +1,6 @@
 # predictive.py
 import joblib
+""" Used to load saved machine learning models (.pkl files)."""
 import numpy as np
 import streamlit as st
 import os
