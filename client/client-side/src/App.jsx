@@ -13,35 +13,29 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 function RedirectToChatbot() {
   const navigate = useNavigate();
-
   useEffect(() => {
-    // Open the chatbot in a new tab
     window.open('https://chatbot-zcfm8sfepngeqjvufqeq2w.streamlit.app/', '_blank');
-
-    // Redirect back to home after opening chatbot
     navigate('/');
   }, [navigate]);
-
-  return null; // Prevent rendering anything on this route
+  return null;
 }
 
 function AppContent() {
   const location = useLocation();
   const hideSidebar = location.pathname === '/login' || location.pathname === '/register';
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Default to closed on mobile, open on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-slate-900">
       {!hideSidebar && (
         <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       )}
 
-      <div
-        className={`flex-1 transition-all ${
-          hideSidebar ? 'w-full' : isSidebarOpen ? 'ml-64' : 'ml-16'
-        }`}
-      >
+      {/* --- THIS IS THE FIX --- */}
+      {/* The main content area no longer needs any margin logic. */}
+      {/* It simply takes up the remaining space. */}
+      <main className="flex-1 overflow-y-auto">
         <Routes>
           {/* Public Routes */}
           <Route path="/register" element={<Registration />} />
@@ -53,12 +47,10 @@ function AppContent() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/search" element={<Search />} />
             <Route path="/medical-chatbot/summary" element={<Summary />} />
-
-            {/* Redirects to Chatbot */}
             <Route path="/medical-chatbot" element={<RedirectToChatbot />} />
           </Route>
         </Routes>
-      </div>
+      </main>
     </div>
   );
 }
@@ -66,7 +58,7 @@ function AppContent() {
 export default function App() {
   return (
     <Router>
-      <ToastContainer />
+      <ToastContainer theme="dark" />
       <AppContent />
     </Router>
   );

@@ -73,7 +73,7 @@ const Registration = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-blue-100 px-4">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-950 px-4">
       {/* Framer Motion animation for the form container */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}

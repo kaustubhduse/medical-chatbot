@@ -69,7 +69,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-blue-100 px-4">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-950 px-4">
        <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
